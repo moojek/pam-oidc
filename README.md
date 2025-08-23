@@ -13,6 +13,10 @@ make
 make install
 ```
 
+If you are building from a git clone (not a distributed tarball), you will need to set up Autotools first by running `autoreconf -fi`.
+
+Without overriding the Autotools' defaults, the module will be installed in `/usr/local/lib/security`. This is most likely not going to work and you will need to specify either installation prefix with `--prefix` or library directory with ` --libdir` to be extra precise. For example `./configure --prefix=/` and `./configure --libdir=/lib` both work on my Arch machine and on Debian I succeeded with `./configure --prefix=/` and `./configure --libdir=/usr/lib/x86_64-linux-gnu`. 
+
 ## Usage
 
 
