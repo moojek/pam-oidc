@@ -6,7 +6,12 @@
 
 The project is currently not packaged in any distribution. 
 
-Build with `make`. Install with `make install` ran with elevated privilages.
+You can build and install following the standard procedure:
+```
+./configure
+make
+make install
+```
 
 ## Usage
 
