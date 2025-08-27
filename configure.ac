@@ -1,7 +1,7 @@
 
 AC_INIT([pam_oidc],[0.1.0])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
-AC_CONFIG_SRCDIR([src/pam_lic.c])
+AC_CONFIG_SRCDIR([src/pam_oidc.c])
 AC_CONFIG_MACRO_DIRS([m4])
 
 
