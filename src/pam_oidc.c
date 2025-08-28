@@ -6,20 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-PAM_EXTERN int pam_sm_setcred(pam_handle_t* pamh, int flags, int argc, const char** argv)
-{
-    return PAM_SUCCESS;
-}
+PAM_EXTERN int pam_sm_setcred(pam_handle_t* pamh, int flags, int argc, const char** argv) { return PAM_SUCCESS; }
 
-PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t* pamh, int flags, int argc, const char** argv)
-{
-    return PAM_SUCCESS;
-}
+PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t* pamh, int flags, int argc, const char** argv) { return PAM_SUCCESS; }
 
-void prompt_callback(const char* prompt, void* context)
-{
-    display_text((pam_handle_t*)context, prompt);
-}
+void prompt_callback(const char* prompt, void* context) { display_text((pam_handle_t*)context, prompt); }
 
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, const char** argv)
 {
@@ -41,6 +32,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
 
     while (1) {
         int option_index = 0;
+        // clang-format off
         static struct option long_options[] = {
             { "client_id", required_argument, 0, 1 },
             { "client_secret", required_argument, 0, 2 },
@@ -48,6 +40,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
             { "openid_config_url", required_argument, 0, 4 },
             { 0, 0, 0, 0 }
         };
+        // clang-format on
 
         c = getopt_long(argc + 1, (char* const*)(argv - 1), "", long_options, &option_index);
         if (c == -1) {
@@ -92,7 +85,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
         return authenticate_local(username, input, verify_endpoint);
     }
     if (strcmp(argv[optind], "poll") == 0) {
-        return authenticate_poll(username, &prompt_callback, pamh, client_id, client_secret);
+        return authenticate_poll(
+            username, &prompt_callback, pamh, client_id, client_secret, openid_configuration_endpoint);
     }
 
     fprintf(stderr, "\nInvalid mode of operation %s\n", argv[optind]);

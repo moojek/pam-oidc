@@ -5,6 +5,6 @@ int authenticate_local(const char* username, const char* token,
     const char* verify_endpoint);
 int authenticate_id_token(const char* username, const char* id_token, const char* openid_configuration_endpoint);
 int authenticate_poll(const char* username, void (*prompt_callback)(const char*, void*), void* prompt_context,
-    const char* client_id, const char* client_secret);
+    const char* openid_configuration_endpoint, const char* client_id, const char* client_secret);
 
 #endif // AUTH_H
