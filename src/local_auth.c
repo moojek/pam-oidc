@@ -14,9 +14,9 @@ int authenticate_local(const char* username, const char* token, const char* veri
 {
     int retval = PAM_AUTH_ERR;
 
-    struct response verify_resp = { 0 };
+    struct Response verify_resp = { 0 };
     verify_endpoint = verify_endpoint ? verify_endpoint : VERIFY_ENDPOINT;
-    CURLcode code = http_get_with_bearer_token_and_parameter(verify_endpoint, token, "username", username, &verify_resp);
+    CURLcode code = getWithBearerTokenAndSingleParameter(verify_endpoint, token, "username", username, &verify_resp);
     if (code != CURLE_OK) {
         retval = PAM_AUTH_ERR;
         goto finish;

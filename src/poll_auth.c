@@ -26,8 +26,8 @@ void get_openid_configuration(
     *device_auth_endpoint_ptr = NULL;
     *token_endpoint_ptr = NULL;
 
-    struct response openid_configuration_resp = { 0 };
-    if ((curlcode = http_get(openid_configuration_endpoint, &openid_configuration_resp)) != CURLE_OK)
+    struct Response openid_configuration_resp = { 0 };
+    if ((curlcode = get(openid_configuration_endpoint, &openid_configuration_resp)) != CURLE_OK)
         goto end;
 
     cJSON* openid_configuration_resp_json = cJSON_Parse(openid_configuration_resp.body);
@@ -111,8 +111,8 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
     if (!auth_start_req_payload)
         goto end;
 
-    struct response auth_start_resp = { 0 };
-    if ((curlcode = http_post(device_auth_endpoint, auth_start_req_payload, &auth_start_resp)) != CURLE_OK)
+    struct Response auth_start_resp = { 0 };
+    if ((curlcode = post(device_auth_endpoint, auth_start_req_payload, &auth_start_resp)) != CURLE_OK)
         goto end;
     cJSON* auth_start_resp_json = cJSON_Parse(auth_start_resp.body);
     if (!auth_start_resp_json)
@@ -141,8 +141,8 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
     char* token = NULL;
     int current_wait_time = 0;
     while (current_wait_time <= expiry) {
-        struct response poll_resp = { 0 };
-        if ((curlcode = http_post(token_endpoint, poll_req_payload, &poll_resp)) != CURLE_OK) {
+        struct Response poll_resp = { 0 };
+        if ((curlcode = post(token_endpoint, poll_req_payload, &poll_resp)) != CURLE_OK) {
             if (poll_resp.body)
                 free(poll_resp.body);
             goto end;

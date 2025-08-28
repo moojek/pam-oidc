@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-static size_t cb(char* data, size_t size, size_t nmemb, void* clientp)
+static size_t callback(char* data, size_t size, size_t nmemb, void* clientp)
 {
     size_t realsize = size * nmemb;
-    struct response* resp = (struct response*)clientp;
+    struct Response* resp = (struct Response*)clientp;
 
     char* ptr = realloc(resp->body, resp->size + realsize + 1);
     if (!ptr)
@@ -19,57 +19,64 @@ static size_t cb(char* data, size_t size, size_t nmemb, void* clientp)
     return realsize;
 }
 
-CURLcode http_get(const char* url, struct response* response)
+int get(const char* url, struct Response* response)
 {
-    CURLcode retval = -1;
+    int returnValue = 1;
 
     CURL* curl = curl_easy_init();
     if (!curl)
         goto finish;
 
-    if ((retval = curl_easy_setopt(curl, CURLOPT_URL, url)) != CURLE_OK)
+    CURLcode curlReturnValue;
+    if ((curlReturnValue = curl_easy_setopt(curl, CURLOPT_URL, url)) != CURLE_OK)
         goto finish;
-    if ((retval = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, cb)) != CURLE_OK)
+    if ((curlReturnValue = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback)) != CURLE_OK)
         goto finish;
-    if ((retval = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)response)) != CURLE_OK)
+    if ((curlReturnValue = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)response)) != CURLE_OK)
         goto finish;
-    retval = curl_easy_perform(curl);
+    if ((curlReturnValue = curl_easy_perform(curl)) != CURLE_OK)
+        goto finish;
+    returnValue = 0;
 
 finish:
     if (curl)
         curl_easy_cleanup(curl);
-    return retval;
+    return returnValue;
 }
 
-CURLcode http_get_with_bearer_token(const char* url, const char* bearer, struct response* response)
+int getWithBearerToken(const char* url, const char* bearerToken, struct Response* response)
 {
-    CURLcode retval = -1;
+    int returnValue = 1;
 
     CURL* curl = curl_easy_init();
     if (!curl)
         goto finish;
 
-    if ((retval = curl_easy_setopt(curl, CURLOPT_URL, url)) != CURLE_OK)
+    CURLcode curlReturnValue;
+    if ((curlReturnValue = curl_easy_setopt(curl, CURLOPT_URL, url)) != CURLE_OK)
         goto finish;
-    if ((retval = curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BEARER)) != CURLE_OK)
+    if ((curlReturnValue = curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BEARER)) != CURLE_OK)
         goto finish;
-    if ((retval = curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, bearer)) != CURLE_OK)
+    if ((curlReturnValue = curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, bearerToken)) != CURLE_OK)
         goto finish;
-    if ((retval = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, cb)) != CURLE_OK)
+    if ((curlReturnValue = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback)) != CURLE_OK)
         goto finish;
-    if ((retval = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)response)) != CURLE_OK)
+    if ((curlReturnValue = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)response)) != CURLE_OK)
         goto finish;
-    retval = curl_easy_perform(curl);
+    if ((curlReturnValue = curl_easy_perform(curl)) != CURLE_OK)
+        goto finish;
+    returnValue = 0;
 
 finish:
     if (curl)
         curl_easy_cleanup(curl);
-    return retval;
+    return returnValue;
 }
 
-CURLcode http_get_with_bearer_token_and_parameter(const char* base_url, const char* bearer, const char* key, const char* value, struct response* response)
+int getWithBearerTokenAndSingleParameter(
+    const char* baseURL, const char* bearerToken, const char* key, const char* value, struct Response* response)
 {
-    CURLcode retval = -1;
+    int returnValue = 1;
 
     fprintf(stderr, "start get k=%s v=%s\n", key, value);
 
@@ -80,133 +87,134 @@ CURLcode http_get_with_bearer_token_and_parameter(const char* base_url, const ch
     strcat(query, "=");
     strcat(query, value);
 
-    CURLU* url_builder = curl_url();
-    if (!url_builder)
+    CURLU* urlBuilder = curl_url();
+    if (!urlBuilder)
         goto finish;
 
-    char* full_url;
-    CURLUcode rc;
-    if ((rc = curl_url_set(url_builder, CURLUPART_URL, base_url, 0)) != CURLUE_OK) {
-        fprintf(stderr, "url set failed (%d) for URL=%s\n", rc, base_url);
+    char* url;
+    CURLUcode urlBuilderReturnValue;
+    if ((urlBuilderReturnValue = curl_url_set(urlBuilder, CURLUPART_URL, baseURL, 0)) != CURLUE_OK) {
+        fprintf(stderr, "url set failed (%d) for URL=%s\n", urlBuilderReturnValue, baseURL);
         goto finish;
     }
-    if ((rc = curl_url_set(url_builder, CURLUPART_QUERY, query, CURLU_APPENDQUERY | CURLU_URLENCODE)) != CURLUE_OK) {
-        fprintf(stderr, "url set failed (%d) for QUERY=%s\n", rc, query);
+    if ((urlBuilderReturnValue = curl_url_set(urlBuilder, CURLUPART_QUERY, query, CURLU_APPENDQUERY | CURLU_URLENCODE))
+        != CURLUE_OK) {
+        fprintf(stderr, "url set failed (%d) for QUERY=%s\n", urlBuilderReturnValue, query);
         goto finish;
     }
-    if ((rc = curl_url_get(url_builder, CURLUPART_URL, &full_url, 0)) != CURLUE_OK) {
-        fprintf(stderr, "url get failed (%d)\n", rc);
+    if ((urlBuilderReturnValue = curl_url_get(urlBuilder, CURLUPART_URL, &url, 0)) != CURLUE_OK) {
+        fprintf(stderr, "url get failed (%d)\n", urlBuilderReturnValue);
         goto finish;
     }
-    fprintf(stderr, "url get url=%s\n", full_url);
+    fprintf(stderr, "url get url=%s\n", url);
 
     CURL* curl = curl_easy_init();
     if (!curl)
         goto finish;
 
-    if ((retval = curl_easy_setopt(curl, CURLOPT_URL, full_url)) != CURLE_OK)
+    CURLcode curlReturnValue;
+    if ((curlReturnValue = curl_easy_setopt(curl, CURLOPT_URL, url)) != CURLE_OK)
         goto finish;
-    if ((retval = curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BEARER)) != CURLE_OK)
+    if ((curlReturnValue = curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BEARER)) != CURLE_OK)
         goto finish;
-    if ((retval = curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, bearer)) != CURLE_OK)
+    if ((curlReturnValue = curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, bearerToken)) != CURLE_OK)
         goto finish;
-    if ((retval = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, cb)) != CURLE_OK)
+    if ((curlReturnValue = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback)) != CURLE_OK)
         goto finish;
-    if ((retval = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)response)) != CURLE_OK)
+    if ((curlReturnValue = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)response)) != CURLE_OK)
         goto finish;
-    fprintf(stderr, "GET %s\nBearer %s\n", full_url, bearer);
-    retval = curl_easy_perform(curl);
+    fprintf(stderr, "GET %s\nBearer %s\n", url, bearerToken);
+    if ((curlReturnValue = curl_easy_perform(curl)) != CURLE_OK)
+        goto finish;
     fprintf(stderr, "200 OK (or not)\n%s\n", response->body);
+    returnValue = 0;
 
 finish:
     if (query)
         free(query);
-    if (url_builder)
-        curl_url_cleanup(url_builder);
+    if (urlBuilder)
+        curl_url_cleanup(urlBuilder);
     if (curl)
         curl_easy_cleanup(curl);
-    return retval;
+    return returnValue;
 }
 
-char* url_encode_form_data(const char* form_data)
+char* urlEncodeFormData(const char* formData)
 {
-    char* retval = NULL;
+    char* returnValue = NULL;
 
-    char* form_data_copy = malloc(strlen(form_data) + 1);
-    if (!form_data_copy)
-        goto finish;
-    strcpy(form_data_copy, form_data);
-
-    CURL* curl = curl_easy_init();
-    if (!curl)
+    char* formDataCopy = strdup(formData);
+    if (!formDataCopy)
         goto finish;
 
-    char* encoded_form_data = malloc(1);
-    if (!encoded_form_data)
+    char* encodedFormData = malloc(1);
+    if (!encodedFormData)
         goto finish;
-    *encoded_form_data = 0;
+    *encodedFormData = '\0';
 
-    char* atsign_ptr = strtok(form_data_copy, "&");
-    while (atsign_ptr) {
-        char* eqsign_ptr = strchr(atsign_ptr, '=');
-        if (!eqsign_ptr)
+    char* atSignPtr = strtok(formDataCopy, "&");
+    while (atSignPtr) {
+        char* equalSignPtr = strchr(atSignPtr, '=');
+        if (!equalSignPtr)
             goto finish;
 
-        char* encoded_key = curl_easy_escape(curl, atsign_ptr, eqsign_ptr - atsign_ptr);
-        char* encoded_value = curl_easy_escape(curl, eqsign_ptr + 1, 0);
-        if (!encoded_key || !encoded_value)
+        char* encodedKey = curl_easy_escape(NULL, atSignPtr, equalSignPtr - atSignPtr);
+        char* encodedValue = curl_easy_escape(NULL, equalSignPtr + 1, 0);
+        if (!encodedKey || !encodedValue)
             goto finish;
 
-        encoded_form_data = realloc(encoded_form_data, strlen(encoded_form_data) + strlen(encoded_key) + 1 + strlen(encoded_value) + 2);
-        if (!encoded_form_data)
+        encodedFormData = realloc(
+            encodedFormData, strlen(encodedFormData) + strlen(encodedKey) + 1 + strlen(encodedValue) + 2);
+        if (!encodedFormData)
             goto finish;
 
-        strcat(encoded_form_data, encoded_key);
-        strcat(encoded_form_data, "=");
-        strcat(encoded_form_data, encoded_value);
-        strcat(encoded_form_data, "&");
+        strcat(encodedFormData, encodedKey);
+        strcat(encodedFormData, "=");
+        strcat(encodedFormData, encodedValue);
+        strcat(encodedFormData, "&");
 
-        atsign_ptr = strtok(NULL, "&");
+        atSignPtr = strtok(NULL, "&");
     }
-    encoded_form_data[strlen(encoded_form_data) - 1] = '\0';
-    retval = encoded_form_data;
+    encodedFormData[strlen(encodedFormData) - 1] = '\0';
+    returnValue = encodedFormData;
 
 finish:
-    if (form_data_copy)
-        free(form_data_copy);
-    if (curl)
-        curl_easy_cleanup(curl);
-    if (!retval && encoded_form_data)
-        free(encoded_form_data);
-    return retval;
+    if (formDataCopy)
+        free(formDataCopy);
+    if (!returnValue && encodedFormData)
+        free(encodedFormData);
+    return returnValue;
 }
 
-CURLcode http_post(const char* url, const char* payload, struct response* response)
+int post(const char* url, const char* payload, struct Response* response)
 {
-    CURLcode retval = -1;
+    int returnValue = 1;
+
+    char* payloadURLEncoded = urlEncodeFormData(payload);
+    if (!payloadURLEncoded)
+        goto finish;
 
     CURL* curl = curl_easy_init();
     if (!curl)
         goto finish;
 
-    char* payload_url_encoded = url_encode_form_data(payload);
-    if (!payload_url_encoded)
-        goto finish;
-
+    CURLcode retval;
     if ((retval = curl_easy_setopt(curl, CURLOPT_URL, url)) != CURLE_OK)
         goto finish;
-    if ((retval = curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload_url_encoded)) != CURLE_OK)
+    if ((retval = curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payloadURLEncoded)) != CURLE_OK)
         goto finish;
-    if ((retval = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, cb)) != CURLE_OK)
+    if ((retval = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback)) != CURLE_OK)
         goto finish;
     if ((retval = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)response)) != CURLE_OK)
         goto finish;
-    retval = curl_easy_perform(curl);
+    if ((retval = curl_easy_perform(curl)) != CURLE_OK)
+        goto finish;
+    returnValue = 0;
 
 finish:
+    if (payloadURLEncoded)
+        free(payloadURLEncoded);
     if (curl)
         curl_easy_cleanup(curl);
-    if (payload_url_encoded)
-        free(payload_url_encoded);
     return retval;
 }
