@@ -69,56 +69,59 @@ finish:
 int authenticate_id_token(const char* username, const char* id_token, const char* openid_configuration_endpoint)
 {
     int retval = PAM_AUTH_ERR;
-    char* mapped_username;
-    char* sub;
-    int verification = 1;
+    char* mapped_username = NULL;
+    char* sub = NULL;
+    jwt_checker_t* jwt_checker = NULL;
+    char* jwks_json_string = NULL;
+    jwk_set_t* jwks = NULL;
+    int isVerified = 1;
 
-    jwt_checker_t* jwt_checker;
-    if ((jwt_checker = jwt_checker_new()) == NULL) {
+    if (!(jwt_checker = jwt_checker_new())) {
         retval = PAM_AUTH_ERR;
-        goto finish;
+        goto end;
     }
 
-    char* jwks_json_string;
     get_jwks_json_string(&jwks_json_string,
         openid_configuration_endpoint ? openid_configuration_endpoint : OPENID_CONFIGURATION_ENDPOINT);
     if (!jwks_json_string) {
         retval = PAM_AUTH_ERR;
-        goto finish;
+        goto end;
     }
 
-    jwk_set_t* jwks = jwks_load(NULL, jwks_json_string);
+    jwks = jwks_load(NULL, jwks_json_string);
     if (!jwks || jwks_error_any(jwks)) {
         retval = PAM_AUTH_ERR;
-        goto finish;
+        goto end;
     }
+
     for (size_t i = 0; i < jwks_item_count(jwks); i++) {
         fprintf(stderr, "Trying to verify JWT with JWK %s\n", jwks_item_kid(jwks_item_get(jwks, i)));
         if (jwt_checker_setkey(jwt_checker, JWT_ALG_RS256, jwks_item_get(jwks, i)))
             continue;
         if (jwt_checker_setcb(jwt_checker, &extract_sub, &sub))
             continue;
-        verification = jwt_checker_verify(jwt_checker, id_token);
-        fprintf(stderr, "Verification result: %d\n", verification);
-        if (!verification)
+        isVerified = jwt_checker_verify(jwt_checker, id_token);
+        fprintf(stderr, "Verification result: %d\n", isVerified);
+        if (!isVerified)
             break;
     }
 
-    if (verification) {
-        fprintf(stderr, "JWT verification failed with status %d and message '%s'\n", verification, jwt_checker_error_msg(jwt_checker));
+    if (isVerified) {
+        fprintf(stderr, "JWT verification failed with status %d and message '%s'\n", isVerified,
+            jwt_checker_error_msg(jwt_checker));
         retval = PAM_AUTH_ERR;
-        goto finish;
+        goto end;
     }
 
     map_sub_to_username(sub, &mapped_username);
     if (strcmp(username, mapped_username)) {
         fprintf(stderr, "Username %s does not match mapped username %s\n", username, mapped_username);
         retval = PAM_AUTH_ERR;
-        goto finish;
+        goto end;
     }
     retval = PAM_SUCCESS;
 
-finish:
+end:
     if (jwt_checker)
         jwt_checker_free(jwt_checker);
     if (jwks_json_string)
