@@ -20,6 +20,5 @@ AC_CHECK_LIB([jwt], [jwt_new])
 # Checks for header files.
 AC_CHECK_HEADERS([security/pam_appl.h security/pam_misc.h curl/curl.h cjson/cJSON.h jwt.h])
 
-AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile])
 AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile doc/Makefile])
 AC_OUTPUT

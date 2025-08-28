@@ -4,6 +4,7 @@
 #include <cjson/cJSON.h>
 #include <curl/curl.h>
 #include <security/pam_appl.h>
+#include <stdlib.h>
 
 int authenticate_local(const char* username, const char* token)
 {
