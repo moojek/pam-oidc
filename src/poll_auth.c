@@ -22,7 +22,6 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
     client_secret = client_secret ? client_secret : CLIENT_SECRET;
     if (client_id == NULL || client_secret == NULL)
         return PAM_AUTH_ERR;
-    // fprintf(stderr, "client_id=%s\nclient_secret=%s\n", client_id, client_secret);
 
     char* payload = malloc(strlen(client_id) + 31);
     sprintf(payload, "client_id=%s&scope=email profile", client_id);
@@ -30,15 +29,12 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
     http_post("https://oauth2.googleapis.com/device/code", payload, &response);
     free(payload);
 
-    // fprintf(stderr, "response: %s\n\n", response.body);
     cJSON* json = cJSON_Parse(response.body);
     char* verification_url = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(json, "verification_url"));
     char* user_code = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(json, "user_code"));
     char* prompt = malloc(strlen(verification_url) + strlen(user_code) + 44);
     sprintf(prompt, "Continue by visiting %s and using code %s there", verification_url, user_code);
-    // fprintf(stderr, "verification url: %s\nuser code: %s\nprompt: %s\n\n", verification_url, user_code, prompt);
     prompt_callback(prompt, prompt_context);
-    // free(prompt);
 
     char* device_code = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(json, "device_code"));
     payload = malloc(strlen(client_id) + strlen(client_secret) + strlen(device_code) + 82);

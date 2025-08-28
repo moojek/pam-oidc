@@ -105,30 +105,22 @@ char* url_encode_form_data(const char* form_data)
     char* result = malloc(1);
     *result = 0;
     char* p = malloc(strlen(form_data) + 1);
-    // fprintf(stderr, "1");
     strcpy(p, form_data);
-    // fprintf(stderr, "2");
     CURL* curl = curl_easy_init();
     char* a = strtok(p, "&");
-    // fprintf(stderr, "3\n");
     while (a) {
-        // fprintf(stderr, "%s, %c\n", a, *a);
         char* e = strchr(a, '=');
-        // fprintf(stderr, "while chr: %c\n", *e);
         char* encoded_key = curl_easy_escape(curl, a, e - a);
         char* encoded_value = curl_easy_escape(curl, e + 1, 0);
-        // fprintf(stderr, "result before: %s\n", result);
         result = realloc(result, strlen(result) + strlen(encoded_key) + 1 + strlen(encoded_value) + 2);
         strcat(result, encoded_key);
         strcat(result, "=");
         strcat(result, encoded_value);
         strcat(result, "&");
-        // fprintf(stderr, "result after: %s\n", result);
         a = strtok(NULL, "&");
     }
     result[strlen(result) - 1] = '\0';
     curl_easy_cleanup(curl);
-    // fprintf(stderr, "0\n");
     return result;
 }
 
@@ -143,7 +135,6 @@ CURLcode http_post(const char* url, const char* payload, struct response* respon
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, cb);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)response);
 
-        // fprintf(stderr, "POST %s\n%s\n\n", url, payload_url_encoded);
         CURLcode res = curl_easy_perform(curl);
 
         free(payload_url_encoded);

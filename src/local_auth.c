@@ -17,7 +17,4 @@ int authenticate_local(const char* username, const char* token)
     if (!cJSON_IsTrue(verified_status_json))
         return PAM_AUTH_ERR;
     return PAM_SUCCESS;
-    // char* verified_status = malloc(strlen(verified_status_json->valuestring) + 1);
-    // strcpy(verified_status, verified_status_json->valuestring);
-    // printf("verified = %s\n", verified_status);
 }
