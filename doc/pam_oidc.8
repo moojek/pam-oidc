@@ -1,6 +1,10 @@
 .TH PAM_OIDC 8 "28 August 2025" "pam_oidc" "OIDC PAM Module Manual"
+
+
 .SH NAME
 pam_oidc \- Module for OpenID Connect (OIDC) authentication
+
+
 .SH SYNOPSIS
 .B pam_oidc id_token
 [\fB--openid-config-url=\fIconfig_url\fR]
@@ -11,9 +15,23 @@ pam_oidc \- Module for OpenID Connect (OIDC) authentication
 .B pam_oidc poll 
 .BI --client_id= client_id
 .BI --client_secret= client_secret
+
+
 .SH DESCRIPTION
 .B pam_oidc
-is a PAM module that incorporates OIDC to your Linux login. It is primarily intended to use with SSH and features a few modes of operation.
+is a PAM module that incorporates OIDC to your Linux login. It features a few modes of operation. 
+
+In
+.B id_token
+mode, the user is prompted for OIDC ID token in JWT format. The module then acquires JWK set (that contains public keys used by OpenID Provider to sign tokens) using the information from supplied OpenID Configuration endpoint (default being Google's endpoint). Next, the token's cryptographic signature is verified. If successful, user is granted access if proper account is requested. For now, only simple mapping is available: the requested account's username must be equal to "user" string + the value of user's "sub" claim (e.g. "user101977677136526966383").
+
+In
+.B local_auth
+mode, the user is prompted for OIDC access token. The module then sends request to supplied motley_cue endpoint (default being "http://localhost:8080/verify_user") containing username and access token. The response contains information whether the user should be granted access.
+
+In
+.B poll
+mode, the user is shown URL and code. The user should visit the URL, paste the provided code and login using the OIDC flow. The module polls for information, whether the user has authenticated. Once successful, user is granted access if proper account is requested. For now, only simple mapping described above is available.
 
 .SH ARGUMENTS
 One non-option argument is required.
@@ -33,13 +51,18 @@ Authenticate using the Device Authorization Flow. Requires
 and
 .IR client_secret .
 
+
 .SH OPTIONS
 .TP
 .BI --client_id= client_id
-OIDC client ID (required for poll mode).
+OIDC client ID (required for
+.B poll
+mode).
 .TP
 .BI --client_secret= client_secret
-OIDC client secret (required for poll mode).
+OIDC client secret (required for
+.B poll
+mode).
 .TP
 .BI --verify_endpoint= verify_endpoint
 motley_cue endpoint to use for user verification. Default is "http://localhost:8080/verify_user".
@@ -47,7 +70,8 @@ motley_cue endpoint to use for user verification. Default is "http://localhost:8
 .BI --openid-config-url= config_url
 OpenID Provider Configuration Information endpoint (the one with "/.well-known/openid-configuration" path). Default is "https://accounts.google.com/.well-known/openid-configuration"
 
-.SH EXAMPLE
+
+.SH EXAMPLES
 .PP
 An example usage for /etc/pam.d/sshd would be:
 .sp
@@ -61,8 +85,6 @@ auth    sufficient  pam_oidc.so local_auth
 .RE
 .\}
 
-.SH AUTHOR
-Grzegorz Suwaj
 
 .SH SEE ALSO
 .BR pam.conf (5), 
