@@ -20,46 +20,92 @@ void map_sub_to_username(const char* sub, char** username)
 
 int extract_sub(jwt_t* jwt, jwt_config_t* config)
 {
+    *((char**)config->ctx) = NULL;
+
     jwt_value_t sub_claim;
     jwt_set_GET_STR(&sub_claim, "sub");
-    jwt_claim_get(jwt, &sub_claim);
+
+    jwt_value_error_t retval;
+    if ((retval = jwt_claim_get(jwt, &sub_claim)) != JWT_VALUE_ERR_NONE)
+        return 1;
     fprintf(stderr, "sub: \"%s\"\n", sub_claim.str_val);
+
     *((char**)config->ctx) = strdup(sub_claim.str_val);
-    return 0;
+    return *((char**)config->ctx) == NULL;
 }
 
-void get_jwks_json(char** jwks)
+void get_jwks_json_string(char** jwks_json_string)
 {
+    *jwks_json_string = NULL;
+    CURLcode curlcode;
+
     struct response well_known_response = { 0 };
-    http_get("https://accounts.google.com/.well-known/openid-configuration", &well_known_response);
+    if ((curlcode = http_get("https://accounts.google.com/.well-known/openid-configuration", &well_known_response)) != CURLE_OK)
+        goto finish;
 
     cJSON* well_known_json = cJSON_Parse(well_known_response.body);
+    if (!well_known_json)
+        goto finish;
+
     cJSON* jwks_uri_json = cJSON_GetObjectItemCaseSensitive(well_known_json, "jwks_uri");
     char* jwks_uri = strdup(cJSON_GetStringValue(jwks_uri_json));
-    cJSON_Delete(well_known_json);
+    if (!jwks_uri)
+        goto finish;
 
     struct response jwks_response = { 0 };
-    http_get(jwks_uri, &jwks_response);
+    if ((curlcode = http_get(jwks_uri, &jwks_response)) != CURLE_OK)
+        goto finish;
+
     cJSON* jwks_json = cJSON_Parse(jwks_response.body);
-    *jwks = cJSON_Print(jwks_json);
-    cJSON_Delete(jwks_json);
+    if (!jwks_json)
+        goto finish;
+
+    *jwks_json_string = cJSON_Print(jwks_json);
+
+finish:
+    if (well_known_response.body)
+        free(well_known_response.body);
+    if (well_known_json)
+        cJSON_Delete(well_known_json);
+    if (jwks_uri)
+        free(jwks_uri);
+    if (jwks_response.body)
+        free(jwks_response.body);
+    if (jwks_json)
+        cJSON_Delete(jwks_json);
 }
 
 int authenticate_id_token(const char* username, const char* id_token)
 {
-    int status = PAM_AUTH_ERR;
+    int retval = PAM_AUTH_ERR;
     char* mapped_username;
     char* sub;
     int verification = 1;
 
-    jwt_checker_t* jwt_checker = jwt_checker_new();
-    char* jwks_json;
-    get_jwks_json(&jwks_json);
-    jwk_set_t* jwks = jwks_load(NULL, jwks_json);
+    jwt_checker_t* jwt_checker;
+    if ((jwt_checker = jwt_checker_new()) == NULL) {
+        retval = PAM_AUTH_ERR;
+        goto finish;
+    }
+
+    char* jwks_json_string;
+    get_jwks_json_string(&jwks_json_string);
+    if (!jwks_json_string) {
+        retval = PAM_AUTH_ERR;
+        goto finish;
+    }
+
+    jwk_set_t* jwks = jwks_load(NULL, jwks_json_string);
+    if (!jwks || jwks_error_any(jwks)) {
+        retval = PAM_AUTH_ERR;
+        goto finish;
+    }
     for (size_t i = 0; i < jwks_item_count(jwks); i++) {
         fprintf(stderr, "Trying to verify JWT with JWK %s\n", jwks_item_kid(jwks_item_get(jwks, i)));
-        jwt_checker_setkey(jwt_checker, JWT_ALG_RS256, jwks_item_get(jwks, i));
-        jwt_checker_setcb(jwt_checker, &extract_sub, &sub);
+        if (jwt_checker_setkey(jwt_checker, JWT_ALG_RS256, jwks_item_get(jwks, i)))
+            continue;
+        if (jwt_checker_setcb(jwt_checker, &extract_sub, &sub))
+            continue;
         verification = jwt_checker_verify(jwt_checker, id_token);
         fprintf(stderr, "Verification result: %d\n", verification);
         if (!verification)
@@ -68,24 +114,29 @@ int authenticate_id_token(const char* username, const char* id_token)
 
     if (verification) {
         fprintf(stderr, "JWT verification failed with status %d and message '%s'\n", verification, jwt_checker_error_msg(jwt_checker));
-        status = PAM_AUTH_ERR;
+        retval = PAM_AUTH_ERR;
         goto finish;
     }
 
     map_sub_to_username(sub, &mapped_username);
     if (strcmp(username, mapped_username)) {
         fprintf(stderr, "Username %s does not match mapped username %s\n", username, mapped_username);
-        status = PAM_AUTH_ERR;
+        retval = PAM_AUTH_ERR;
         goto finish;
     }
-
-    status = PAM_SUCCESS;
+    retval = PAM_SUCCESS;
 
 finish:
     if (jwt_checker)
         jwt_checker_free(jwt_checker);
+    if (jwks_json_string)
+        free(jwks_json_string);
+    if (jwks)
+        jwks_free(jwks);
     if (sub)
         free(sub);
+    if (mapped_username)
+        free(mapped_username);
 
-    return status;
+    return retval;
 }
