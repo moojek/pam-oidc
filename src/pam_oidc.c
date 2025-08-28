@@ -86,7 +86,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
     }
     if (strcmp(argv[optind], "poll") == 0) {
         return authenticateWithPolling(
-            username, &promptCallback, pamh, clientID, clientSecret, openidConfigurationEndpoint);
+            username, &promptCallback, pamh, openidConfigurationEndpoint, clientID, clientSecret);
     }
 
     fprintf(stderr, "\nInvalid mode of operation %s\n", argv[optind]);

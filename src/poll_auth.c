@@ -84,53 +84,60 @@ void constructPollRequestPayload(
     }
 }
 
-int authenticateWithPolling(const char* username, void (*promptCallback)(const char*, void*), void* promptCallbackContext,
-    const char* openidConfigurationEndpoint, const char* clientID, const char* clientSecret)
+int authenticateWithPolling(const char* username, void (*promptCallback)(const char*, void*),
+    void* promptCallbackContext, const char* openidConfigurationEndpoint, const char* clientID,
+    const char* clientSecret)
 {
     int retval = PAM_AUTH_ERR;
+    char* deviceAuthenticationEndpoint = NULL;
+    char* tokenEndpoint = NULL;
+    char* authenticationStartRequestPayload = NULL;
+    cJSON* authenticationStartResponseJSON = NULL;
+    char* prompt = NULL;
+    char* pollRequestPayload = NULL;
+    char* token = NULL;
+    int currentWaitTimeValue;
 
     clientID = clientID ? clientID : CLIENT_ID;
     clientSecret = clientSecret ? clientSecret : CLIENT_SECRET;
+    if (openidConfigurationEndpoint == NULL)
+        openidConfigurationEndpoint = OPENID_CONFIGURATION_ENDPOINT;
     if (clientID == NULL || clientSecret == NULL)
         goto end;
 
-    char* deviceAuthenticationndpoint = NULL;
-    char* tokenEndpoint = NULL;
-    getOpenIDConfiguration(openidConfigurationEndpoint, &deviceAuthenticationndpoint, &tokenEndpoint);
-    if (!deviceAuthenticationndpoint || !tokenEndpoint)
+    getOpenIDConfiguration(openidConfigurationEndpoint, &deviceAuthenticationEndpoint, &tokenEndpoint);
+    if (!deviceAuthenticationEndpoint || !tokenEndpoint)
         goto end;
 
-    char* authenticationStartRequestPayload = NULL;
     constructAuthenticationStartRequestPayload(&authenticationStartRequestPayload, clientID);
     if (!authenticationStartRequestPayload)
         goto end;
 
-    cJSON* authenticationStartResponseJSON = postAsJSON(deviceAuthenticationndpoint, authenticationStartRequestPayload);
+    authenticationStartResponseJSON = postAsJSON(deviceAuthenticationEndpoint, authenticationStartRequestPayload);
     if (!authenticationStartResponseJSON)
         goto end;
 
     char* verificationUrl
         = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(authenticationStartResponseJSON, "verification_url"));
-    char* userCode = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(authenticationStartResponseJSON, "user_code"));
-    char* deviceCode = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(authenticationStartResponseJSON, "device_code"));
+    char* userCode
+        = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(authenticationStartResponseJSON, "user_code"));
+    char* deviceCode
+        = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(authenticationStartResponseJSON, "device_code"));
     int delay = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(authenticationStartResponseJSON, "interval"));
     int expiry = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(authenticationStartResponseJSON, "expires_in"));
     if (!verificationUrl || !userCode || !deviceCode || delay == NAN || expiry == NAN)
         goto end;
 
-    char* prompt = NULL;
     constructPrompt(&prompt, verificationUrl, userCode);
     if (!prompt)
         goto end;
     promptCallback(prompt, promptCallbackContext);
 
-    char* pollRequestPayload = NULL;
     constructPollRequestPayload(&pollRequestPayload, clientID, clientSecret, deviceCode);
     if (!pollRequestPayload)
         goto end;
 
-    char* token = NULL;
-    int currentWaitTimeValue = 0;
+    currentWaitTimeValue = 0;
     while (currentWaitTimeValue <= expiry) {
         cJSON* pollResponseJSON = postAsJSON(tokenEndpoint, pollRequestPayload);
         if (!pollResponseJSON)
@@ -159,8 +166,8 @@ int authenticateWithPolling(const char* username, void (*promptCallback)(const c
     retval = authenticateWithIDToken(username, token, openidConfigurationEndpoint);
 
 end:
-    if (deviceAuthenticationndpoint)
-        free(deviceAuthenticationndpoint);
+    if (deviceAuthenticationEndpoint)
+        free(deviceAuthenticationEndpoint);
     if (tokenEndpoint)
         free(tokenEndpoint);
     if (authenticationStartRequestPayload)
