@@ -6,13 +6,17 @@
 #include <security/pam_appl.h>
 #include <stdlib.h>
 
-int authenticate_local(const char* username, const char* token)
+#ifndef VERIFY_ENDPOINT
+#define VERIFY_ENDPOINT "http://localhost:8080/verify_user"
+#endif
+
+int authenticate_local(const char* username, const char* token, const char* verify_endpoint)
 {
     int retval = PAM_AUTH_ERR;
 
     struct response verify_resp = { 0 };
-    char* verify_query = "http://localhost:8080/verify_user";
-    CURLcode code = http_get_with_bearer_token_and_parameter(verify_query, token, "username", username, &verify_resp);
+    verify_endpoint = verify_endpoint ? verify_endpoint : VERIFY_ENDPOINT;
+    CURLcode code = http_get_with_bearer_token_and_parameter(verify_endpoint, token, "username", username, &verify_resp);
     if (code != CURLE_OK) {
         retval = PAM_AUTH_ERR;
         goto finish;

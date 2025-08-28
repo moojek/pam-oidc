@@ -36,7 +36,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
     if (argc > 0)
         fprintf(stderr, "%s'\n", argv[argc - 1]);
 
-    char *client_id = NULL, *client_secret = NULL;
+    char *client_id = NULL, *client_secret = NULL, *verify_endpoint = NULL;
     int c;
 
     while (1) {
@@ -44,6 +44,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
         static struct option long_options[] = {
             { "client_id", required_argument, 0, 1 },
             { "client_secret", required_argument, 0, 2 },
+            { "verify_endpoint", required_argument, 0, 3 },
             { 0, 0, 0, 0 }
         };
 
@@ -59,6 +60,9 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
             break;
         case 2:
             client_secret = optarg;
+            break;
+        case 3:
+            verify_endpoint = optarg;
             break;
 
         default:
@@ -81,7 +85,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
     }
     if (strcmp(argv[optind], "local_auth") == 0) {
         get_input(pamh, flags, &input, "Access token: ");
-        return authenticate_local(username, input);
+        return authenticate_local(username, input, verify_endpoint);
     }
     if (strcmp(argv[optind], "poll") == 0) {
         return authenticate_poll(username, &prompt_callback, pamh, client_id, client_secret);
