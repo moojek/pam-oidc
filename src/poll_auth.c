@@ -26,11 +26,7 @@ void get_openid_configuration(
     *device_auth_endpoint_ptr = NULL;
     *token_endpoint_ptr = NULL;
 
-    struct Response openid_configuration_resp = { 0 };
-    if ((curlcode = get(openid_configuration_endpoint, &openid_configuration_resp)) != CURLE_OK)
-        goto end;
-
-    cJSON* openid_configuration_resp_json = cJSON_Parse(openid_configuration_resp.body);
+    cJSON* openid_configuration_resp_json = getAsJSON(openid_configuration_endpoint);
     if (!openid_configuration_resp_json)
         goto end;
 
@@ -47,8 +43,6 @@ void get_openid_configuration(
     *token_endpoint_ptr = strdup(token_endpoint);
 
 end:
-    if (openid_configuration_resp.body)
-        free(openid_configuration_resp.body);
     if (openid_configuration_resp_json)
         cJSON_Delete(openid_configuration_resp_json);
 }
@@ -111,10 +105,7 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
     if (!auth_start_req_payload)
         goto end;
 
-    struct Response auth_start_resp = { 0 };
-    if ((curlcode = post(device_auth_endpoint, auth_start_req_payload, &auth_start_resp)) != CURLE_OK)
-        goto end;
-    cJSON* auth_start_resp_json = cJSON_Parse(auth_start_resp.body);
+    cJSON* auth_start_resp_json = postAsJSON(device_auth_endpoint, auth_start_req_payload);
     if (!auth_start_resp_json)
         goto end;
 
@@ -141,20 +132,9 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
     char* token = NULL;
     int current_wait_time = 0;
     while (current_wait_time <= expiry) {
-        struct Response poll_resp = { 0 };
-        if ((curlcode = post(token_endpoint, poll_req_payload, &poll_resp)) != CURLE_OK) {
-            if (poll_resp.body)
-                free(poll_resp.body);
+        cJSON* poll_resp_json = postAsJSON(token_endpoint, poll_req_payload);
+        if (!poll_resp_json)
             goto end;
-        }
-
-        fprintf(stderr, "poll response: %s\n", poll_resp.body);
-        cJSON* poll_resp_json = cJSON_Parse(poll_resp.body);
-        if (!poll_resp_json) {
-            if (poll_resp.body)
-                free(poll_resp.body);
-            goto end;
-        }
 
         if (cJSON_HasObjectItem(poll_resp_json, "error")) {
             char* error = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(poll_resp_json, "error"));
@@ -167,9 +147,7 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
             fprintf(stderr, "Token: %s\n", token);
         }
 
-        free(poll_resp.body);
         cJSON_Delete(poll_resp_json);
-
         if (token)
             break;
 
@@ -187,8 +165,6 @@ end:
         free(token_endpoint);
     if (auth_start_req_payload)
         free(auth_start_req_payload);
-    if (auth_start_resp.body)
-        free(auth_start_resp.body);
     if (auth_start_resp_json)
         cJSON_Delete(auth_start_resp_json);
     if (prompt)

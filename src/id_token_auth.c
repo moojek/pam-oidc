@@ -39,11 +39,7 @@ void get_jwks_json_string(char** jwks_json_string, const char* openid_configurat
     *jwks_json_string = NULL;
     CURLcode curlcode;
 
-    struct Response well_known_response = { 0 };
-    if ((curlcode = get(openid_configuration_endpoint, &well_known_response)) != CURLE_OK)
-        goto finish;
-
-    cJSON* well_known_json = cJSON_Parse(well_known_response.body);
+    cJSON* well_known_json = getAsJSON(openid_configuration_endpoint);
     if (!well_known_json)
         goto finish;
 
@@ -52,25 +48,17 @@ void get_jwks_json_string(char** jwks_json_string, const char* openid_configurat
     if (!jwks_uri)
         goto finish;
 
-    struct Response jwks_response = { 0 };
-    if ((curlcode = get(jwks_uri, &jwks_response)) != CURLE_OK)
-        goto finish;
-
-    cJSON* jwks_json = cJSON_Parse(jwks_response.body);
+    cJSON* jwks_json = getAsJSON(jwks_uri);
     if (!jwks_json)
         goto finish;
 
     *jwks_json_string = cJSON_Print(jwks_json);
 
 finish:
-    if (well_known_response.body)
-        free(well_known_response.body);
     if (well_known_json)
         cJSON_Delete(well_known_json);
     if (jwks_uri)
         free(jwks_uri);
-    if (jwks_response.body)
-        free(jwks_response.body);
     if (jwks_json)
         cJSON_Delete(jwks_json);
 }

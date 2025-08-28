@@ -51,7 +51,12 @@ cJSON* getAsJSON(const char* url)
     if (get(url, &response))
         return NULL;
 
-    return cJSON_Parse(response.body);
+    cJSON* json = NULL;
+    if (response.body) {
+        json = cJSON_Parse(response.body);
+        free(response.body);
+    }
+    return json;
 }
 
 int getWithBearerToken(const char* url, const char* bearerToken, struct Response* response)
@@ -89,7 +94,12 @@ cJSON* getWithBearerTokenAsJSON(const char* url, const char* bearerToken)
     if (getWithBearerToken(url, bearerToken, &response))
         return NULL;
 
-    return cJSON_Parse(response.body);
+    cJSON* json = NULL;
+    if (response.body) {
+        json = cJSON_Parse(response.body);
+        free(response.body);
+    }
+    return json;
 }
 
 int getWithBearerTokenAndSingleParameter(
@@ -165,7 +175,12 @@ cJSON* getWithBearerTokenAndSingleParameterAsJSON(
     if (getWithBearerTokenAndSingleParameter(baseUrl, bearerToken, key, value, &response))
         return NULL;
 
-    return cJSON_Parse(response.body);
+    cJSON* json = NULL;
+    if (response.body) {
+        json = cJSON_Parse(response.body);
+        free(response.body);
+    }
+    return json;
 }
 
 char* urlEncodeFormData(const char* formData)
@@ -254,5 +269,10 @@ cJSON* postAsJSON(const char* url, const char* payload)
     if (post(url, payload, &response))
         return NULL;
 
-    return cJSON_Parse(response.body);
+    cJSON* json = NULL;
+    if (response.body) {
+        json = cJSON_Parse(response.body);
+        free(response.body);
+    }
+    return json;
 }

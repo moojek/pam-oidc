@@ -14,20 +14,14 @@ int authenticate_local(const char* username, const char* token, const char* veri
 {
     int retval = PAM_AUTH_ERR;
 
-    struct Response verify_resp = { 0 };
     verify_endpoint = verify_endpoint ? verify_endpoint : VERIFY_ENDPOINT;
-    CURLcode code = getWithBearerTokenAndSingleParameter(verify_endpoint, token, "username", username, &verify_resp);
-    if (code != CURLE_OK) {
+    cJSON* verify_req_json = getWithBearerTokenAndSingleParameterAsJSON(verify_endpoint, token, "username", username);
+    if (!verify_req_json) {
         retval = PAM_AUTH_ERR;
         goto finish;
     }
-
-    cJSON* json = cJSON_Parse(verify_resp.body);
-    if (!json) {
-        retval = PAM_AUTH_ERR;
-        goto finish;
-    }
-    cJSON* verified_status_json = cJSON_GetObjectItemCaseSensitive(json, "verified");
+    
+    cJSON* verified_status_json = cJSON_GetObjectItemCaseSensitive(verify_req_json, "verified");
     fprintf(stderr, "verified_status_json=%s\n", cJSON_GetStringValue(verified_status_json));
     if (!cJSON_IsTrue(verified_status_json)) {
         retval = PAM_AUTH_ERR;
@@ -37,9 +31,7 @@ int authenticate_local(const char* username, const char* token, const char* veri
     retval = PAM_SUCCESS;
 
 finish:
-    if (verify_resp.body)
-        free(verify_resp.body);
-    if (json)
-        cJSON_Delete(json);
+    if (verify_req_json)
+        cJSON_Delete(verify_req_json);
     return retval;
 }
