@@ -74,7 +74,7 @@ int authenticate_id_token(const char* username, const char* id_token, const char
     jwt_checker_t* jwt_checker = NULL;
     char* jwks_json_string = NULL;
     jwk_set_t* jwks = NULL;
-    int isVerified = 1;
+    int jwtVerificationStatus;
 
     if (!(jwt_checker = jwt_checker_new())) {
         retval = PAM_AUTH_ERR;
@@ -100,14 +100,14 @@ int authenticate_id_token(const char* username, const char* id_token, const char
             continue;
         if (jwt_checker_setcb(jwt_checker, &extract_sub, &sub))
             continue;
-        isVerified = jwt_checker_verify(jwt_checker, id_token);
-        fprintf(stderr, "Verification result: %d\n", isVerified);
-        if (!isVerified)
+        jwtVerificationStatus = jwt_checker_verify(jwt_checker, id_token);
+        fprintf(stderr, "Verification result: %d\n", jwtVerificationStatus);
+        if (!jwtVerificationStatus)
             break;
     }
 
-    if (isVerified) {
-        fprintf(stderr, "JWT verification failed with status %d and message '%s'\n", isVerified,
+    if (jwtVerificationStatus) {
+        fprintf(stderr, "JWT verification failed with status %d and message '%s'\n", jwtVerificationStatus,
             jwt_checker_error_msg(jwt_checker));
         retval = PAM_AUTH_ERR;
         goto end;
