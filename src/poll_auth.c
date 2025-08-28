@@ -53,6 +53,42 @@ end:
         cJSON_Delete(openid_configuration_resp_json);
 }
 
+void construct_auth_start_req_payload(char** payload_ptr, const char* client_id)
+{
+    *payload_ptr = malloc(strlen(client_id) + 31);
+    if (!*payload_ptr)
+        return;
+    if (sprintf(*payload_ptr, "client_id=%s&scope=email profile", client_id) < 0) {
+        free(*payload_ptr);
+        *payload_ptr = NULL;
+    }
+}
+
+void construct_prompt(char** prompt_ptr, const char* verification_url, const char* user_code)
+{
+    *prompt_ptr = malloc(strlen(verification_url) + strlen(user_code) + 44);
+    if (!*prompt_ptr)
+        return;
+    if (sprintf(*prompt_ptr, "Continue by visiting %s and using code %s there", verification_url, user_code) < 0) {
+        free(*prompt_ptr);
+        *prompt_ptr = NULL;
+    }
+}
+
+void construct_poll_req_payload(
+    char** payload_ptr, const char* client_id, const char* client_secret, const char* device_code)
+{
+    *payload_ptr = malloc(strlen(client_id) + strlen(client_secret) + strlen(device_code) + 82);
+    if (!*payload_ptr)
+        return;
+    if (sprintf(*payload_ptr, "client_id=%s&client_secret=%s&code=%s&grant_type=http://oauth.net/grant_type/device/1.0",
+            client_id, client_secret, device_code)
+        < 0) {
+        free(*payload_ptr);
+        *payload_ptr = NULL;
+    }
+}
+
 int authenticate_poll(const char* username, void (*prompt_callback)(const char*, void*), void* prompt_context,
     const char* openid_configuration_endpoint, const char* client_id, const char* client_secret)
 {
@@ -70,15 +106,14 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
     if (!device_auth_endpoint || !token_endpoint)
         goto end;
 
-    char* auth_start_req_payload = malloc(strlen(client_id) + 31);
+    char* auth_start_req_payload = NULL;
+    construct_auth_start_req_payload(&auth_start_req_payload, client_id);
     if (!auth_start_req_payload)
         goto end;
-    sprintf(auth_start_req_payload, "client_id=%s&scope=email profile", client_id);
 
     struct response auth_start_resp = { 0 };
     if ((curlcode = http_post(device_auth_endpoint, auth_start_req_payload, &auth_start_resp)) != CURLE_OK)
         goto end;
-
     cJSON* auth_start_resp_json = cJSON_Parse(auth_start_resp.body);
     if (!auth_start_resp_json)
         goto end;
@@ -92,23 +127,22 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
     if (!verification_url || !user_code || !device_code || delay == NAN || expiry == NAN)
         goto end;
 
-    char* prompt = malloc(strlen(verification_url) + strlen(user_code) + 44);
+    char* prompt = NULL;
+    construct_prompt(&prompt, verification_url, user_code);
     if (!prompt)
         goto end;
-    sprintf(prompt, "Continue by visiting %s and using code %s there", verification_url, user_code);
     prompt_callback(prompt, prompt_context);
 
-    char* poll_req_payload = malloc(strlen(client_id) + strlen(client_secret) + strlen(device_code) + 82);
+    char* poll_req_payload = NULL;
+    construct_poll_req_payload(&poll_req_payload, client_id, client_secret, device_code);
     if (!poll_req_payload)
         goto end;
-    sprintf(poll_req_payload, "client_id=%s&client_secret=%s&code=%s&grant_type=http://oauth.net/grant_type/device/1.0",
-        client_id, client_secret, device_code);
 
     char* token = NULL;
     int current_wait_time = 0;
     while (current_wait_time <= expiry) {
         struct response poll_resp = { 0 };
-        if ((curlcode = http_post("https://oauth2.googleapis.com/token", poll_req_payload, &poll_resp)) != CURLE_OK) {
+        if ((curlcode = http_post(token_endpoint, poll_req_payload, &poll_resp)) != CURLE_OK) {
             if (poll_resp.body)
                 free(poll_resp.body);
             goto end;
@@ -128,7 +162,6 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
             if (!strcmp(error, "slow_down")) {
                 delay++;
             }
-            // free(error);
         } else {
             token = strdup(cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(poll_resp_json, "id_token")));
             fprintf(stderr, "Token: %s\n", token);
