@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* expected hook */
 PAM_EXTERN int pam_sm_setcred(pam_handle_t* pamh, int flags, int argc, const char** argv)
 {
     return PAM_SUCCESS;
@@ -14,29 +13,18 @@ PAM_EXTERN int pam_sm_setcred(pam_handle_t* pamh, int flags, int argc, const cha
 
 PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t* pamh, int flags, int argc, const char** argv)
 {
-    printf("Acct mgmt\n");
     return PAM_SUCCESS;
 }
 
 void prompt_callback(const char* prompt, void* context)
 {
-    // fprintf(stderr, "start prompt callback\n\n");
     display_text((pam_handle_t*)context, prompt);
-    // fprintf(stderr, "end prompt callback\n\n");
 }
 
-// enum operation_mode {
-//     id_token = 1,
-//     local_auth = 2,
-//     poll = 4
-// };
-
-/* expected hook, this is where custom stuff happens */
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, const char** argv)
 {
     const char* username;
     get_username(pamh, &username, "Username: ");
-    // printf("Welcome %s\n", username);
 
     fprintf(stderr, "%d args: '", argc);
     for (size_t i = 0; i < argc - 1; i++) {
@@ -76,7 +64,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
         }
     }
 
-    if (--optind + 1 < argc) {
+    fprintf(stderr, "optind=%d, argc=%d\n", optind, argc);
+    if (--optind >= argc) {
         fprintf(stderr, "No arguments specified - cannot determine mode of operation\n");
         return PAM_AUTH_ERR;
     }

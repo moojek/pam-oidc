@@ -21,7 +21,7 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
     client_id = client_id ? client_id : CLIENT_ID;
     client_secret = client_secret ? client_secret : CLIENT_SECRET;
     if (client_id == NULL || client_secret == NULL)
-        return PAM_AUTHINFO_UNAVAIL;
+        return PAM_AUTH_ERR;
     // fprintf(stderr, "client_id=%s\nclient_secret=%s\n", client_id, client_secret);
 
     char* payload = malloc(strlen(client_id) + 31);
