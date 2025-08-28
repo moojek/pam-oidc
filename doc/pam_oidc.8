@@ -1,0 +1,60 @@
+.TH PAM_OIDC 8 "28 August 2025" "pam_oidc" "OIDC PAM Module Manual"
+.SH NAME
+pam_oidc \- Module for OpenID Connect (OIDC) authentication
+.SH SYNOPSIS
+.B pam_oidc id_token
+.br
+.B pam_oidc local_auth
+.br
+.B pam_oidc poll 
+.BI --client_id= <client_id>
+.BI --client_secret= <client_secret>
+.SH DESCRIPTION
+.B pam_oidc
+is a PAM module that incorporates OIDC to your Linux login. It is primarily intended to use with SSH and features a few modes of operation.
+
+.SH MODES
+.TP
+.B id_token
+Authenticate using an ID token. The user is prompted for the token.
+.TP
+.B local_auth
+Authenticate using an access token. The user is prompted for the token.
+.TP
+.B poll
+Authenticate using the OIDC device authorization flow. Requires 
+.I client_id
+and
+.IR client_secret .
+
+.SH OPTIONS
+.TP
+.B --client_id <id>
+OIDC client ID (required for poll mode).
+.TP
+.B --client_secret <secret>
+OIDC client secret (required for poll mode).
+
+.SH EXAMPLE
+.PP
+An example usage for /etc/pam.d/sshd would be:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+auth    sufficient  pam_oidc.so local_auth
+.fi
+.if n \{\
+.RE
+.\}
+
+.SH AUTHOR
+Grzegorz Suwaj
+
+.SH SEE ALSO
+.BR pam.conf (5), 
+.BR pam.d (5),
+.BR pam (8),
+.BR sshd (8),
+.BR sshd_config (5)
