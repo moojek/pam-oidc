@@ -3,8 +3,8 @@
 
 #include <security/pam_appl.h>
 
-int get_username(pam_handle_t* pamh, const char** user);
-int get_input(pam_handle_t* pamh, int flags, char** input, const char* prompt);
-void display_text(pam_handle_t* pamh, const char* prompt);
+int getUsername(pam_handle_t* pamh, const char** user);
+int getInput(pam_handle_t* pamh, int flags, char** input, const char* prompt);
+void displayText(pam_handle_t* pamh, const char* prompt);
 
 #endif // PAM_HELPER_H

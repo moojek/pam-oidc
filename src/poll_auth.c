@@ -19,133 +19,135 @@
 #define CLIENT_SECRET NULL
 #endif
 
-void get_openid_configuration(
-    const char* openid_configuration_endpoint, char** device_auth_endpoint_ptr, char** token_endpoint_ptr)
+void getOpenIDConfiguration(const char* openidConfigurationEndpoint, char** deviceAuthenticationEndpointStringPointer,
+    char** tokenEndpointStringPointer)
 {
-    *device_auth_endpoint_ptr = NULL;
-    *token_endpoint_ptr = NULL;
+    *deviceAuthenticationEndpointStringPointer = NULL;
+    *tokenEndpointStringPointer = NULL;
 
-    cJSON* openid_configuration_resp_json = getAsJSON(openid_configuration_endpoint);
-    if (!openid_configuration_resp_json)
+    cJSON* openidConfigurationResponseJSON = getAsJSON(openidConfigurationEndpoint);
+    if (!openidConfigurationResponseJSON)
         goto end;
 
-    char* device_auth_endpoint = cJSON_GetStringValue(
-        cJSON_GetObjectItemCaseSensitive(openid_configuration_resp_json, "device_authorization_endpoint"));
-    if (!device_auth_endpoint)
+    char* deviceAuthenticationEndpoint = cJSON_GetStringValue(
+        cJSON_GetObjectItemCaseSensitive(openidConfigurationResponseJSON, "device_authorization_endpoint"));
+    if (!deviceAuthenticationEndpoint)
         goto end;
-    *device_auth_endpoint_ptr = strdup(device_auth_endpoint);
+    *deviceAuthenticationEndpointStringPointer = strdup(deviceAuthenticationEndpoint);
 
-    char* token_endpoint
-        = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(openid_configuration_resp_json, "token_endpoint"));
-    if (!token_endpoint)
+    char* tokenEndpoint
+        = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(openidConfigurationResponseJSON, "token_endpoint"));
+    if (!tokenEndpoint)
         goto end;
-    *token_endpoint_ptr = strdup(token_endpoint);
+    *tokenEndpointStringPointer = strdup(tokenEndpoint);
 
 end:
-    if (openid_configuration_resp_json)
-        cJSON_Delete(openid_configuration_resp_json);
+    if (openidConfigurationResponseJSON)
+        cJSON_Delete(openidConfigurationResponseJSON);
 }
 
-void construct_auth_start_req_payload(char** payload_ptr, const char* client_id)
+void constructAuthenticationStartRequestPayload(char** payloadStringPointer, const char* clientId)
 {
-    *payload_ptr = malloc(strlen(client_id) + 31);
-    if (!*payload_ptr)
+    *payloadStringPointer = malloc(strlen(clientId) + 31);
+    if (!*payloadStringPointer)
         return;
-    if (sprintf(*payload_ptr, "client_id=%s&scope=email profile", client_id) < 0) {
-        free(*payload_ptr);
-        *payload_ptr = NULL;
+    if (sprintf(*payloadStringPointer, "client_id=%s&scope=email profile", clientId) < 0) {
+        free(*payloadStringPointer);
+        *payloadStringPointer = NULL;
     }
 }
 
-void construct_prompt(char** prompt_ptr, const char* verification_url, const char* user_code)
+void constructPrompt(char** promptStringPointer, const char* verificationURL, const char* userCode)
 {
-    *prompt_ptr = malloc(strlen(verification_url) + strlen(user_code) + 44);
-    if (!*prompt_ptr)
+    *promptStringPointer = malloc(strlen(verificationURL) + strlen(userCode) + 44);
+    if (!*promptStringPointer)
         return;
-    if (sprintf(*prompt_ptr, "Continue by visiting %s and using code %s there", verification_url, user_code) < 0) {
-        free(*prompt_ptr);
-        *prompt_ptr = NULL;
-    }
-}
-
-void construct_poll_req_payload(
-    char** payload_ptr, const char* client_id, const char* client_secret, const char* device_code)
-{
-    *payload_ptr = malloc(strlen(client_id) + strlen(client_secret) + strlen(device_code) + 82);
-    if (!*payload_ptr)
-        return;
-    if (sprintf(*payload_ptr, "client_id=%s&client_secret=%s&code=%s&grant_type=http://oauth.net/grant_type/device/1.0",
-            client_id, client_secret, device_code)
+    if (sprintf(*promptStringPointer, "Continue by visiting %s and using code %s there", verificationURL, userCode)
         < 0) {
-        free(*payload_ptr);
-        *payload_ptr = NULL;
+        free(*promptStringPointer);
+        *promptStringPointer = NULL;
     }
 }
 
-int authenticate_poll(const char* username, void (*prompt_callback)(const char*, void*), void* prompt_context,
-    const char* openid_configuration_endpoint, const char* client_id, const char* client_secret)
+void constructPollRequestPayload(
+    char** payloadStringPointer, const char* clientID, const char* clientSecret, const char* deviceCode)
+{
+    *payloadStringPointer = malloc(strlen(clientID) + strlen(clientSecret) + strlen(deviceCode) + 82);
+    if (!*payloadStringPointer)
+        return;
+    if (sprintf(*payloadStringPointer,
+            "client_id=%s&client_secret=%s&code=%s&grant_type=http://oauth.net/grant_type/device/1.0", clientID,
+            clientSecret, deviceCode)
+        < 0) {
+        free(*payloadStringPointer);
+        *payloadStringPointer = NULL;
+    }
+}
+
+int authenticateWithPolling(const char* username, void (*promptCallback)(const char*, void*), void* promptCallbackContext,
+    const char* openidConfigurationEndpoint, const char* clientID, const char* clientSecret)
 {
     int retval = PAM_AUTH_ERR;
 
-    client_id = client_id ? client_id : CLIENT_ID;
-    client_secret = client_secret ? client_secret : CLIENT_SECRET;
-    if (client_id == NULL || client_secret == NULL)
+    clientID = clientID ? clientID : CLIENT_ID;
+    clientSecret = clientSecret ? clientSecret : CLIENT_SECRET;
+    if (clientID == NULL || clientSecret == NULL)
         goto end;
 
-    char* device_auth_endpoint = NULL;
-    char* token_endpoint = NULL;
-    get_openid_configuration(openid_configuration_endpoint, &device_auth_endpoint, &token_endpoint);
-    if (!device_auth_endpoint || !token_endpoint)
+    char* deviceAuthenticationndpoint = NULL;
+    char* tokenEndpoint = NULL;
+    getOpenIDConfiguration(openidConfigurationEndpoint, &deviceAuthenticationndpoint, &tokenEndpoint);
+    if (!deviceAuthenticationndpoint || !tokenEndpoint)
         goto end;
 
-    char* auth_start_req_payload = NULL;
-    construct_auth_start_req_payload(&auth_start_req_payload, client_id);
-    if (!auth_start_req_payload)
+    char* authenticationStartRequestPayload = NULL;
+    constructAuthenticationStartRequestPayload(&authenticationStartRequestPayload, clientID);
+    if (!authenticationStartRequestPayload)
         goto end;
 
-    cJSON* auth_start_resp_json = postAsJSON(device_auth_endpoint, auth_start_req_payload);
-    if (!auth_start_resp_json)
+    cJSON* authenticationStartResponseJSON = postAsJSON(deviceAuthenticationndpoint, authenticationStartRequestPayload);
+    if (!authenticationStartResponseJSON)
         goto end;
 
-    char* verification_url
-        = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(auth_start_resp_json, "verification_url"));
-    char* user_code = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(auth_start_resp_json, "user_code"));
-    char* device_code = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(auth_start_resp_json, "device_code"));
-    int delay = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(auth_start_resp_json, "interval"));
-    int expiry = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(auth_start_resp_json, "expires_in"));
-    if (!verification_url || !user_code || !device_code || delay == NAN || expiry == NAN)
+    char* verificationUrl
+        = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(authenticationStartResponseJSON, "verification_url"));
+    char* userCode = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(authenticationStartResponseJSON, "user_code"));
+    char* deviceCode = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(authenticationStartResponseJSON, "device_code"));
+    int delay = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(authenticationStartResponseJSON, "interval"));
+    int expiry = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(authenticationStartResponseJSON, "expires_in"));
+    if (!verificationUrl || !userCode || !deviceCode || delay == NAN || expiry == NAN)
         goto end;
 
     char* prompt = NULL;
-    construct_prompt(&prompt, verification_url, user_code);
+    constructPrompt(&prompt, verificationUrl, userCode);
     if (!prompt)
         goto end;
-    prompt_callback(prompt, prompt_context);
+    promptCallback(prompt, promptCallbackContext);
 
-    char* poll_req_payload = NULL;
-    construct_poll_req_payload(&poll_req_payload, client_id, client_secret, device_code);
-    if (!poll_req_payload)
+    char* pollRequestPayload = NULL;
+    constructPollRequestPayload(&pollRequestPayload, clientID, clientSecret, deviceCode);
+    if (!pollRequestPayload)
         goto end;
 
     char* token = NULL;
-    int current_wait_time = 0;
-    while (current_wait_time <= expiry) {
-        cJSON* poll_resp_json = postAsJSON(token_endpoint, poll_req_payload);
-        if (!poll_resp_json)
+    int currentWaitTimeValue = 0;
+    while (currentWaitTimeValue <= expiry) {
+        cJSON* pollResponseJSON = postAsJSON(tokenEndpoint, pollRequestPayload);
+        if (!pollResponseJSON)
             goto end;
 
-        if (cJSON_HasObjectItem(poll_resp_json, "error")) {
-            char* error = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(poll_resp_json, "error"));
+        if (cJSON_HasObjectItem(pollResponseJSON, "error")) {
+            char* error = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(pollResponseJSON, "error"));
             fprintf(stderr, "Poll error: %s\n", error);
             if (!strcmp(error, "slow_down")) {
                 delay++;
             }
         } else {
-            token = strdup(cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(poll_resp_json, "id_token")));
+            token = strdup(cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(pollResponseJSON, "id_token")));
             fprintf(stderr, "Token: %s\n", token);
         }
 
-        cJSON_Delete(poll_resp_json);
+        cJSON_Delete(pollResponseJSON);
         if (token)
             break;
 
@@ -154,21 +156,21 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
     if (token == NULL)
         goto end;
 
-    retval = authenticate_id_token(username, token, openid_configuration_endpoint);
+    retval = authenticateWithIDToken(username, token, openidConfigurationEndpoint);
 
 end:
-    if (device_auth_endpoint)
-        free(device_auth_endpoint);
-    if (token_endpoint)
-        free(token_endpoint);
-    if (auth_start_req_payload)
-        free(auth_start_req_payload);
-    if (auth_start_resp_json)
-        cJSON_Delete(auth_start_resp_json);
+    if (deviceAuthenticationndpoint)
+        free(deviceAuthenticationndpoint);
+    if (tokenEndpoint)
+        free(tokenEndpoint);
+    if (authenticationStartRequestPayload)
+        free(authenticationStartRequestPayload);
+    if (authenticationStartResponseJSON)
+        cJSON_Delete(authenticationStartResponseJSON);
     if (prompt)
         free(prompt);
-    if (poll_req_payload)
-        free(poll_req_payload);
+    if (pollRequestPayload)
+        free(pollRequestPayload);
     if (token)
         free(token);
     return retval;

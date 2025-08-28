@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int get_username(pam_handle_t* pamh, const char** user)
+int getUsername(pam_handle_t* pamh, const char** user)
 {
     return pam_get_user(pamh, user, NULL);
 }
@@ -32,7 +32,7 @@ int converse(pam_handle_t* pamh, int nargs, struct pam_message** message, struct
     return retval;
 }
 
-int get_input(pam_handle_t* pamh, int flags, char** input, const char* prompt)
+int getInput(pam_handle_t* pamh, int flags, char** input, const char* prompt)
 {
     int retval;
     struct pam_message msg[1], *pmsg[1];
@@ -55,7 +55,7 @@ int get_input(pam_handle_t* pamh, int flags, char** input, const char* prompt)
         return PAM_CONV_ERR;
 }
 
-void display_text(pam_handle_t* pamh, const char* prompt)
+void displayText(pam_handle_t* pamh, const char* prompt)
 {
     int retval;
     struct pam_message msg[1], *pmsg[1];
