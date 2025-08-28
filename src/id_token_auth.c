@@ -34,13 +34,13 @@ int extract_sub(jwt_t* jwt, jwt_config_t* config)
     return *((char**)config->ctx) == NULL;
 }
 
-void get_jwks_json_string(char** jwks_json_string)
+void get_jwks_json_string(char** jwks_json_string, const char* openid_configuration_endpoint)
 {
     *jwks_json_string = NULL;
     CURLcode curlcode;
 
     struct response well_known_response = { 0 };
-    if ((curlcode = http_get("https://accounts.google.com/.well-known/openid-configuration", &well_known_response)) != CURLE_OK)
+    if ((curlcode = http_get(openid_configuration_endpoint, &well_known_response)) != CURLE_OK)
         goto finish;
 
     cJSON* well_known_json = cJSON_Parse(well_known_response.body);
@@ -75,7 +75,11 @@ finish:
         cJSON_Delete(jwks_json);
 }
 
-int authenticate_id_token(const char* username, const char* id_token)
+#ifndef OPENID_CONFIGURATION_ENDPOINT
+#define OPENID_CONFIGURATION_ENDPOINT "https://accounts.google.com/.well-known/openid-configuration"
+#endif
+
+int authenticate_id_token(const char* username, const char* id_token, const char* openid_configuration_endpoint)
 {
     int retval = PAM_AUTH_ERR;
     char* mapped_username;
@@ -89,7 +93,8 @@ int authenticate_id_token(const char* username, const char* id_token)
     }
 
     char* jwks_json_string;
-    get_jwks_json_string(&jwks_json_string);
+    get_jwks_json_string(&jwks_json_string,
+        openid_configuration_endpoint ? openid_configuration_endpoint : OPENID_CONFIGURATION_ENDPOINT);
     if (!jwks_json_string) {
         retval = PAM_AUTH_ERR;
         goto finish;

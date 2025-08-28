@@ -36,7 +36,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
     if (argc > 0)
         fprintf(stderr, "%s'\n", argv[argc - 1]);
 
-    char *client_id = NULL, *client_secret = NULL, *verify_endpoint = NULL;
+    char *client_id = NULL, *client_secret = NULL, *verify_endpoint = NULL, *openid_configuration_endpoint = NULL;
     int c;
 
     while (1) {
@@ -45,6 +45,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
             { "client_id", required_argument, 0, 1 },
             { "client_secret", required_argument, 0, 2 },
             { "verify_endpoint", required_argument, 0, 3 },
+            { "openid_config_url", required_argument, 0, 4 },
             { 0, 0, 0, 0 }
         };
 
@@ -64,6 +65,9 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
         case 3:
             verify_endpoint = optarg;
             break;
+        case 4:
+            openid_configuration_endpoint = optarg;
+            break;
 
         default:
             fprintf(stderr, "?? getopt returned character code 0%o ??\n", c);
@@ -81,7 +85,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
 
     if (strcmp(argv[optind], "id_token") == 0) {
         get_input(pamh, flags, &input, "ID Token: ");
-        return authenticate_id_token(username, input);
+        return authenticate_id_token(username, input, openid_configuration_endpoint);
     }
     if (strcmp(argv[optind], "local_auth") == 0) {
         get_input(pamh, flags, &input, "Access token: ");

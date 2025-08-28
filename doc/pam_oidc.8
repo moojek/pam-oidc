@@ -3,6 +3,7 @@
 pam_oidc \- Module for OpenID Connect (OIDC) authentication
 .SH SYNOPSIS
 .B pam_oidc id_token
+[\fB--openid-config-url=\fIconfig_url\fR]
 .br
 .B pam_oidc local_auth
 [\fB--verify_endpoint=\fIverify_endpoint\fR]
@@ -42,6 +43,9 @@ OIDC client secret (required for poll mode).
 .TP
 .BI --verify_endpoint= verify_endpoint
 motley_cue endpoint to use for user verification. Default is "http://localhost:8080/verify_user".
+.TP
+.BI --openid-config-url= config_url
+OpenID Provider Configuration Information endpoint (the one with "/.well-known/openid-configuration" path). Default is "https://accounts.google.com/.well-known/openid-configuration"
 
 .SH EXAMPLE
 .PP
