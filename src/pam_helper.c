@@ -6,12 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void get_username(pam_handle_t* pamh, const char** user, const char* prompt)
+int get_username(pam_handle_t* pamh, const char** user)
 {
-    // int retval;
-    // if ((retval = pam_get_user(pamh, user, prompt)) != PAM_SUCCESS)
-    //     return retval;
-    pam_get_user(pamh, user, prompt);
+    return pam_get_user(pamh, user, NULL);
 }
 
 int converse(pam_handle_t* pamh, int nargs, struct pam_message** message, struct pam_response** response)

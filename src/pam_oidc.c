@@ -23,8 +23,11 @@ void prompt_callback(const char* prompt, void* context)
 
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, const char** argv)
 {
+    int retval;
+
     const char* username;
-    get_username(pamh, &username, "Username: ");
+    if (retval = get_username(pamh, &username) != PAM_SUCCESS)
+        return retval;
 
     fprintf(stderr, "%d args: '", argc);
     for (size_t i = 0; i < argc - 1; i++) {
