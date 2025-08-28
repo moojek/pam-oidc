@@ -13,16 +13,20 @@ pam_oidc \- Module for OpenID Connect (OIDC) authentication
 .B pam_oidc
 is a PAM module that incorporates OIDC to your Linux login. It is primarily intended to use with SSH and features a few modes of operation.
 
-.SH MODES
+.SH ARGUMENTS
+One non-option argument is required.
+First non-option argument specifies the mode name, the rest is discarded.
+.br
+Following are valid values for the mode name:
 .TP
 .B id_token
 Authenticate using an ID token. The user is prompted for the token.
 .TP
 .B local_auth
-Authenticate using an access token. The user is prompted for the token.
+Authenticate using an OIDC access token. The user is prompted for the token.
 .TP
 .B poll
-Authenticate using the OIDC device authorization flow. Requires 
+Authenticate using the Device Authorization Flow. Requires 
 .I client_id
 and
 .IR client_secret .
