@@ -8,14 +8,24 @@
 #include <string.h>
 #include <unistd.h>
 
-const char* CLIENT_ID = "683392123229-sj57mvnsjpor7au4p7iq9pvq74ipvt1t.apps.googleusercontent.com";
-const char* CLIENT_SECRET = "***";
+#ifndef CLIENT_ID
+#define CLIENT_ID NULL
+#endif
+#ifndef CLIENT_SECRET
+#define CLIENT_SECRET NULL
+#endif
 
-int authenticate_poll(const char* username, void (*prompt_callback)(const char*, void*), void* prompt_context)
+int authenticate_poll(const char* username, void (*prompt_callback)(const char*, void*), void* prompt_context,
+    const char* client_id, const char* client_secret)
 {
-    // fprintf(stderr, )
-    char* payload = malloc(strlen(CLIENT_ID) + 31);
-    sprintf(payload, "client_id=%s&scope=email profile", CLIENT_ID);
+    client_id = client_id ? client_id : CLIENT_ID;
+    client_secret = client_secret ? client_secret : CLIENT_SECRET;
+    if (client_id == NULL || client_secret == NULL)
+        return PAM_AUTHINFO_UNAVAIL;
+    // fprintf(stderr, "client_id=%s\nclient_secret=%s\n", client_id, client_secret);
+
+    char* payload = malloc(strlen(client_id) + 31);
+    sprintf(payload, "client_id=%s&scope=email profile", client_id);
     struct response response = { 0 };
     http_post("https://oauth2.googleapis.com/device/code", payload, &response);
     free(payload);
@@ -29,10 +39,10 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
     // fprintf(stderr, "verification url: %s\nuser code: %s\nprompt: %s\n\n", verification_url, user_code, prompt);
     prompt_callback(prompt, prompt_context);
     // free(prompt);
-    
+
     char* device_code = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(json, "device_code"));
-    payload = malloc(strlen(CLIENT_ID) + strlen(CLIENT_SECRET) + strlen(device_code) + 82);
-    sprintf(payload, "client_id=%s&client_secret=%s&code=%s&grant_type=http://oauth.net/grant_type/device/1.0", CLIENT_ID, CLIENT_SECRET, device_code);
+    payload = malloc(strlen(client_id) + strlen(client_secret) + strlen(device_code) + 82);
+    sprintf(payload, "client_id=%s&client_secret=%s&code=%s&grant_type=http://oauth.net/grant_type/device/1.0", client_id, client_secret, device_code);
     int delay = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(json, "interval"));
     int expiry = cJSON_GetNumberValue(cJSON_GetObjectItemCaseSensitive(json, "expires_in"));
     cJSON_Delete(json);
