@@ -1,5 +1,6 @@
 #include "http_client.h"
 #include <cjson/cJSON.h>
+#include <curl/curl.h>
 #include <stdlib.h>
 #include <string.h>
 

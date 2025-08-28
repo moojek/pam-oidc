@@ -1,7 +1,7 @@
 #ifndef HTTP_CLIENT_H
 #define HTTP_CLIENT_H
 
-#include <curl/curl.h>
+#include <cjson/cJSON.h>
 
 struct Response {
     size_t size;

@@ -37,7 +37,6 @@ int extract_sub(jwt_t* jwt, jwt_config_t* config)
 void get_jwks_json_string(char** jwks_json_string, const char* openid_configuration_endpoint)
 {
     *jwks_json_string = NULL;
-    CURLcode curlcode;
 
     cJSON* well_known_json = getAsJSON(openid_configuration_endpoint);
     if (!well_known_json)

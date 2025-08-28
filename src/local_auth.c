@@ -2,9 +2,9 @@
 #include "http_client.h"
 
 #include <cjson/cJSON.h>
-#include <curl/curl.h>
 #include <security/pam_appl.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #ifndef VERIFY_ENDPOINT
 #define VERIFY_ENDPOINT "http://localhost:8080/verify_user"
@@ -20,7 +20,7 @@ int authenticate_local(const char* username, const char* token, const char* veri
         retval = PAM_AUTH_ERR;
         goto finish;
     }
-    
+
     cJSON* verified_status_json = cJSON_GetObjectItemCaseSensitive(verify_req_json, "verified");
     fprintf(stderr, "verified_status_json=%s\n", cJSON_GetStringValue(verified_status_json));
     if (!cJSON_IsTrue(verified_status_json)) {

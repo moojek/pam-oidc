@@ -22,7 +22,6 @@
 void get_openid_configuration(
     const char* openid_configuration_endpoint, char** device_auth_endpoint_ptr, char** token_endpoint_ptr)
 {
-    CURLcode curlcode;
     *device_auth_endpoint_ptr = NULL;
     *token_endpoint_ptr = NULL;
 
@@ -87,7 +86,6 @@ int authenticate_poll(const char* username, void (*prompt_callback)(const char*,
     const char* openid_configuration_endpoint, const char* client_id, const char* client_secret)
 {
     int retval = PAM_AUTH_ERR;
-    CURLcode curlcode;
 
     client_id = client_id ? client_id : CLIENT_ID;
     client_secret = client_secret ? client_secret : CLIENT_SECRET;
