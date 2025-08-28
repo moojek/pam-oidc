@@ -1,4 +1,5 @@
 #include "http_client.h"
+#include <cjson/cJSON.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -44,6 +45,15 @@ finish:
     return returnValue;
 }
 
+cJSON* getAsJSON(const char* url)
+{
+    struct Response response = { 0 };
+    if (get(url, &response))
+        return NULL;
+
+    return cJSON_Parse(response.body);
+}
+
 int getWithBearerToken(const char* url, const char* bearerToken, struct Response* response)
 {
     int returnValue = 1;
@@ -71,6 +81,15 @@ finish:
     if (curl)
         curl_easy_cleanup(curl);
     return returnValue;
+}
+
+cJSON* getWithBearerTokenAsJSON(const char* url, const char* bearerToken)
+{
+    struct Response response = { 0 };
+    if (getWithBearerToken(url, bearerToken, &response))
+        return NULL;
+
+    return cJSON_Parse(response.body);
 }
 
 int getWithBearerTokenAndSingleParameter(
@@ -139,6 +158,16 @@ finish:
     return returnValue;
 }
 
+cJSON* getWithBearerTokenAndSingleParameterAsJSON(
+    const char* baseUrl, const char* bearerToken, const char* key, const char* value)
+{
+    struct Response response = { 0 };
+    if (getWithBearerTokenAndSingleParameter(baseUrl, bearerToken, key, value, &response))
+        return NULL;
+
+    return cJSON_Parse(response.body);
+}
+
 char* urlEncodeFormData(const char* formData)
 {
     char* returnValue = NULL;
@@ -163,8 +192,8 @@ char* urlEncodeFormData(const char* formData)
         if (!encodedKey || !encodedValue)
             goto finish;
 
-        encodedFormData = realloc(
-            encodedFormData, strlen(encodedFormData) + strlen(encodedKey) + 1 + strlen(encodedValue) + 2);
+        encodedFormData
+            = realloc(encodedFormData, strlen(encodedFormData) + strlen(encodedKey) + 1 + strlen(encodedValue) + 2);
         if (!encodedFormData)
             goto finish;
 
@@ -217,4 +246,13 @@ finish:
     if (curl)
         curl_easy_cleanup(curl);
     return retval;
+}
+
+cJSON* postAsJSON(const char* url, const char* payload)
+{
+    struct Response response = { 0 };
+    if (post(url, payload, &response))
+        return NULL;
+
+    return cJSON_Parse(response.body);
 }
