@@ -34,10 +34,10 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
         int option_index = 0;
         // clang-format off
         static struct option long_options[] = {
-            { "client_id", required_argument, 0, 1 },
-            { "client_secret", required_argument, 0, 2 },
-            { "verify_endpoint", required_argument, 0, 3 },
-            { "openid_config_url", required_argument, 0, 4 },
+            { "openid_config_url",  required_argument, 0, 4 },
+            { "verify_endpoint",    required_argument, 0, 3 },
+            { "client_id",          required_argument, 0, 1 },
+            { "client_secret",      required_argument, 0, 2 },
             { 0, 0, 0, 0 }
         };
         // clang-format on
