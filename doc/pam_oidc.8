@@ -91,24 +91,34 @@ and
 
 .SH OPTIONS
 .TP
-.BI --client_id= client_id
-OIDC client ID (required for
-.B poll
-mode)\&.
-.TP
-.BI --client_secret= client_secret
-OIDC client secret (required for
-.B poll
-mode)\&.
-.TP
-.BI --verify_endpoint= verify_endpoint
-motley_cue endpoint to use for user verification\&.
-Default is "http://localhost:8080/verify_user"\&.
-.TP
 .BI --openid-config-url= config_url
 OpenID Provider Configuration Information endpoint
 (the one with "/\&.well-known/openid-configuration" path)\&.
-Default is "https://accounts\&.google\&.com/\&.well-known/openid-configuration"
+Default is "https://accounts\&.google\&.com/\&.well-known/openid-configuration".
+.br
+Applies to
+.B id_token
+and
+.B poll
+modes.
+.TP
+.BI --client_id= client_id
+OAuth 2.0 client ID. Required for
+.B poll
+mode\&.
+.TP
+.BI --client_secret= client_secret
+OAuth 2.0 client secret. Required for
+.B poll
+mode\&.
+.TP
+.BI --verify_endpoint= verify_endpoint
+motley_cue service endpoint to use for user verification\&.
+Default is "http://localhost:8080/verify_user"\&.
+.br
+Applies to
+.B local_auth
+mode\&.
 
 .PP
 Options that are not valid for selected mode are discarded.
