@@ -9,13 +9,13 @@ pam_oidc \- Module for OpenID Connect (OIDC) authentication
 .B pam_oidc\&.so id_token
 [\fB--openid-config-url=\fIconfig_url\fR]
 .br
-.B pam_oidc\&.so local_auth
-[\fB--verify_endpoint=\fIverify_endpoint\fR]
-.br
 .B pam_oidc\&.so poll
 .BI --client_id= client_id
 .BI --client_secret= client_secret
 [\fB--openid-config-url=\fIconfig_url\fR]
+.br
+.B pam_oidc\&.so local_auth
+[\fB--verify_endpoint=\fIverify_endpoint\fR]
 
 
 .SH DESCRIPTION
@@ -26,17 +26,36 @@ It features a few modes of operation\&.
 In
 .B id_token
 mode, the user is prompted for OIDC ID token in JWT format\&.
-The module then acquires JWK set
-(that contains public keys used by OpenID Provider to sign tokens)
-using the information from
-.I config_url
-OpenID Configuration endpoint
-(default being Google's endpoint)\&.
-Next, the token's cryptographic signature is verified\&.
+Using JWK (JSON Web Key) Set
+(that contains the public part of key used to sign the token)
+obtained from OpenID Provider's dedicated endpoint,
+the token's cryptographic signature is verified\&.
 If successful, user is granted access if proper account is requested\&.
 For now, only simple mapping is available:
 the requested account's username must be equal to "user" string
-+ the value of user's "sub" claim (e\&.g\&."user101977677136526966383")\&.
++ the value of user's "sub" claim (e\&.g\&. "user101977677136526966383")\&.
+
+In
+.B poll
+mode, the user is shown URL and code\&.
+The user should visit the URL,
+paste the provided code and login using the OIDC flow\&.
+The module polls the OpenID Provider token endpoint for information, whether the user has authenticated\&.
+Once successful, user is granted access if proper account is requested\&.
+For now, only simple mapping described above is available\&.
+.br
+This mode requires obtaining OAuth 2.0 credentials from OpenID provider of your choice. 
+The client ID and client secret must be provided using
+.IR client_id
+and
+.I client_secret
+options.
+
+In both of two modes mentioned above, the specified
+.I config_url
+is used to request OpenID Provider Configuration Information document.
+It contains information needed to interact with OP,
+including its OAuth 2.0 endpoint locations.
 
 In
 .B local_auth
@@ -47,15 +66,6 @@ motley_cue endpoint
 (default being "http://localhost:8080/verify_user")
 containing username and access token\&.
 User is granted access based on the information in the response\&.
-
-In
-.B poll
-mode, the user is shown URL and code\&.
-The user should visit the URL,
-paste the provided code and login using the OIDC flow\&.
-The module polls for information, whether the user has authenticated\&.
-Once successful, user is granted access if proper account is requested\&.
-For now, only simple mapping described above is available\&.
 
 .SH ARGUMENTS
 One non-option argument is required\&.
