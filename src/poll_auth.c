@@ -1,5 +1,5 @@
 #include "auth.h"
-#include "http_client.h"
+#include "../lib/http_client.h"
 
 #include <cjson/cJSON.h>
 #include <math.h>

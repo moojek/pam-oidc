@@ -1,5 +1,5 @@
 #include "auth.h"
-#include "pam_helper.h"
+#include "../lib/pam_helper.h"
 #include <getopt.h>
 #include <security/pam_modules.h>
 #include <stdio.h>
