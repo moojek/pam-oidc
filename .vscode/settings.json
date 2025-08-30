@@ -2,7 +2,6 @@
     "files.associations": {
         "cstdlib": "c",
         "jwt.h": "c",
-        "pam_appl.h": "c",
         "string.h": "c",
         "math.h": "c"
     }

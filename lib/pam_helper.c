@@ -1,6 +1,5 @@
 #include "pam_helper.h"
 
-#include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <stddef.h>
 #include <stdio.h>

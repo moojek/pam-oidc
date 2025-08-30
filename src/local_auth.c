@@ -2,7 +2,7 @@
 #include "../lib/http_client.h"
 
 #include <cjson/cJSON.h>
-#include <security/pam_appl.h>
+#include <security/pam_modules.h>
 #include <stdio.h>
 #include <stdlib.h>
 
