@@ -1,0 +1,16 @@
+name: Build and publish
+on:
+  push:
+    tags:
+      - '*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build
+        uses: wolfSSL/actions-build-autotools-project@v1
+        with: 
+          # repository: 
+          configure: '--libdir=/usr/lib/x86_64-linux-gnu'
+          check: false
+          install: true
