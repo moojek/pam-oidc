@@ -5,9 +5,45 @@ on:
       - '*'
   workflow_dispatch:
 jobs:
+  build-libjwt3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: benmcollins/libjwt
+          ref: v3.2.2
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libjansson-dev cmake
+      - name: Build libjwt
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          make jwt
+      - name: Debug
+        run: |
+          ls
+      - name: Copy library files to output path
+        run: |
+          mkdir output
+          cp build/libjwt.so output/
+          cp build/libjwt.a output/
+      - name: Upload output files
+        uses: actions/upload-artifact@v3
+        with:
+          name: libjwt-output
+          path: output/
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Download libjwt
+        uses: actions/download-artifact@v3
+        with:
+          name: libjwt-output
+          path: /usr/local/lib
       - name: Build
         uses: wolfSSL/actions-build-autotools-project@v1
         with: 
