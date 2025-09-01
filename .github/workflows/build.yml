@@ -25,7 +25,7 @@ jobs:
         working-directory: build
         run: |
           cmake ..
-          make jwt
+          make
       - name: Copy library files to output path
         run: |
           cp jwt.h output/
