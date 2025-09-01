@@ -29,8 +29,8 @@ jobs:
       - name: Copy library files to output path
         run: |
           mkdir output
-          cp build/libjwt.so output/
-          cp build/libjwt.a output/
+          cp libjwt.so output/
+          cp libjwt.a output/
       - name: Upload output files
         uses: actions/upload-artifact@v4
         with:
@@ -38,6 +38,7 @@ jobs:
           path: output/
   build:
     runs-on: ubuntu-latest
+    needs: build-libjwt3
     steps:
       - name: Download libjwt
         uses: actions/download-artifact@v4
