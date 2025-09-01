@@ -32,7 +32,7 @@ jobs:
           cp build/libjwt.so output/
           cp build/libjwt.a output/
       - name: Upload output files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: libjwt-output
           path: output/
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download libjwt
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: libjwt-output
           path: /usr/local/lib
