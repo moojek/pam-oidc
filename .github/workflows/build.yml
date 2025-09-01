@@ -43,9 +43,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: libjwt-output
-      - run: |
-          ls
-          cp output/libjwt.so /usr/local/lib/
+      - run: ls
+      - run: cp libjwt.so /usr/local/lib/
       - name: Install dependencies
         run: |
           sudo apt-get update
