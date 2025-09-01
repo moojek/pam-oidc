@@ -28,7 +28,7 @@ jobs:
           make
       - name: Copy library files to output path
         run: |
-          cp jwt.h output/
+          cp include/jwt.h output/
           cp build/jwt_export.h output/
           cp build/libjwt.so output/
       - name: Upload output files
