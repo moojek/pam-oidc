@@ -25,9 +25,8 @@ jobs:
           cmake ..
           make jwt
       - name: Copy library files to output path
-        working-directory: build
         run: |
-          cp libjwt.so output/
+          cp build/libjwt.so output/
           # cp libjwt.a output/
       - name: Upload output files
         uses: actions/upload-artifact@v4
