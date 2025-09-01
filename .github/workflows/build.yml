@@ -44,6 +44,10 @@ jobs:
         with:
           name: libjwt-output
           path: /usr/local/lib
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcjson-dev
       - name: Build
         uses: wolfSSL/actions-build-autotools-project@v1
         with: 
