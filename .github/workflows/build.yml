@@ -17,20 +17,18 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libjansson-dev cmake
+      - run: |
+          mkdir build output
       - name: Build libjwt
+        working-directory: build
         run: |
-          mkdir build
-          cd build
           cmake ..
           make jwt
-      - name: Debug
-        run: |
-          ls
       - name: Copy library files to output path
+        working-directory: build
         run: |
-          mkdir output
           cp libjwt.so output/
-          cp libjwt.a output/
+          # cp libjwt.a output/
       - name: Upload output files
         uses: actions/upload-artifact@v4
         with:
