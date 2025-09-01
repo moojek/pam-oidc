@@ -58,4 +58,4 @@ jobs:
           # repository: 
           configure: '--libdir=/usr/lib/x86_64-linux-gnu'
           check: false
-          install: true
+          install: false
