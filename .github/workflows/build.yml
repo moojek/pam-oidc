@@ -28,8 +28,9 @@ jobs:
           make jwt
       - name: Copy library files to output path
         run: |
+          cp jwt.h output/
+          cp build/jwt_export.h output/
           cp build/libjwt.so output/
-          # cp libjwt.a output/
       - name: Upload output files
         uses: actions/upload-artifact@v4
         with:
@@ -43,8 +44,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: libjwt-output
-      - run: ls
-      - run: sudo cp libjwt.so /usr/local/lib/
+      - run: |
+          sudo cp jwt.h /usr/local/include/
+          sudo cp jwt_export.h /usr/local/include/
+          sudo cp libjwt.so /usr/local/lib/
       - name: Install dependencies
         run: |
           sudo apt-get update
