@@ -44,7 +44,7 @@ jobs:
         with:
           name: libjwt-output
       - run: ls
-      - run: cp libjwt.so /usr/local/lib/
+      - run: sudo cp libjwt.so /usr/local/lib/
       - name: Install dependencies
         run: |
           sudo apt-get update
