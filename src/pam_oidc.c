@@ -88,3 +88,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, cons
     fprintf(stderr, "\nInvalid mode of operation %s\n", argv[optind]);
     return PAM_AUTH_ERR;
 }
+
+PAM_EXTERN int pam_sm_setcred(pam_handle_t* pamh, int flags, int argc, const char** argv)
+{
+    return PAM_IGNORE;
+}
