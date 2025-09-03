@@ -59,10 +59,10 @@ void constructAuthenticationStartRequestPayload(char** payloadStringPointer, con
 
 void constructPrompt(char** promptStringPointer, const char* verificationURL, const char* userCode)
 {
-    *promptStringPointer = malloc(strlen(verificationURL) + strlen(userCode) + 44);
+    *promptStringPointer = malloc(strlen(verificationURL) + strlen(userCode) + 68);
     if (!*promptStringPointer)
         return;
-    if (sprintf(*promptStringPointer, "Continue by visiting %s and using code %s there", verificationURL, userCode)
+    if (sprintf(*promptStringPointer, "Visit %s, use code %s, authenticate and press Enter", verificationURL, userCode)
         < 0) {
         free(*promptStringPointer);
         *promptStringPointer = NULL;

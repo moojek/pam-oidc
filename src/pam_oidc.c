@@ -6,7 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-void promptCallback(const char* prompt, void* context) { displayText((pam_handle_t*)context, prompt); }
+void promptCallback(const char* prompt, void* context)
+{
+    char* input;
+    getInput((pam_handle_t*)context, 0, &input, prompt);
+}
 
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t* pamh, int flags, int argc, const char** argv)
 {
