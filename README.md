@@ -17,13 +17,15 @@ If you are building from a git clone (not a distributed tarball), you will need 
 Without overriding the Autotools' defaults, the module will be installed in `/usr/local/lib/security`. This is most likely not going to work and you will need to specify either installation prefix with `--prefix` or library directory with ` --libdir` to be extra precise. For example `./configure --prefix=/` and `./configure --libdir=/lib` both work on my Arch machine, but on Debian I only succeeded with `./configure --libdir=/usr/lib/x86_64-linux-gnu`. 
 
 ## Dependencies
-* Autoconf, Automake and Libtool (if building from bare repository)
-* C compiler (only tested with gcc)
-* Make
-* [cJSON](https://github.com/DaveGamble/cJSON)
-* [libcurl](https://curl.se/libcurl/)
-* PAM development libraries
-* [libjwt](https://github.com/benmcollins/libjwt) (Version 3!)
+| Dependency | Arch package | Debian package | Notes
+| - | - | - | - |
+| Autotools | `autoconf`, `automake`, `libtool` | `autoconf`, `automake`, `libtool` | Only required if building from cloned repository.
+| Any C compiler | `gcc` | `gcc` | Only tested with gcc
+| Make | `make` | `make` 
+| [cJSON](https://github.com/DaveGamble/cJSON) | `cjson` | `libcjson-dev`
+| [libcurl](https://curl.se/libcurl/) | `curl` | `libcurl4-gnutls-dev`/`libcurl4-openssl-dev`
+| PAM | `pam` | `libpam0g-dev`
+| [libjwt](https://github.com/benmcollins/libjwt) | `libjwt`<sup>AUR</sup> | n/a | Version 3 required!
 
 ## Usage
 After the module is installed, you have to configure the service of your choice to use it. For example using it with SSH would require modifying `/etc/pam.d/sshd`. Typical usage would look like this:
